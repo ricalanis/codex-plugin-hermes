@@ -31,6 +31,8 @@ Load these by name; they cover the three recurring jobs in this repo.
 - `.claude/skills/pull-reflect` — sync upstream mirrors, triage drift (Port / Skip / Adapt), record in `docs/drift-log.md`. Deterministic detector: `.claude/skills/pull-reflect/scripts/check-drift.sh [--notify]`.
 - `.claude/skills/supervise-codex` — how to brief Codex and verify contract-first.
 
+Weekly upkeep runs unattended from Codex Web; the task prompt is `docs/weekly-maintenance-prompt.md`.
+
 ## Dependencies
 
 `dependencies.yaml` declares them; `scripts/doctor.sh` checks them (`--json` for machine output). Required: bash, codex CLI ≥0.144, jq, git, and standard POSIX tools. Optional: `hermes` (notifications only), `setsid` (Linux fast path). Dev: shellcheck, python3.

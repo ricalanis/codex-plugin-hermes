@@ -132,7 +132,21 @@ for req in (\"codex\",\"jq\",\"git\"):
 for x in deps:
     assert isinstance(x[\"present\"], bool), x
 "'
-check "doctor exits 0 when required deps present" "$ROOT/scripts/doctor.sh"
+# doctor exits non-zero when a required dep is genuinely absent, so this check is only
+# meaningful where the codex CLI exists (it won't in a cloud container). Skip loudly.
+if command -v codex >/dev/null 2>&1; then
+  check "doctor exits 0 when required deps present" "$ROOT/scripts/doctor.sh"
+else
+  SKIPPED="${SKIPPED:-}doctor-exit-0 (codex CLI absent) "
+  printf 'SKIP doctor exits 0 — codex CLI not installed in this environment\n'
+fi
+# doctor must still FAIL when a required dep is missing, everywhere.
+check "doctor exits non-zero when a required dep is missing" bash -c '
+  d=$(mktemp -d); for b in bash git awk sed date mktemp head tail tr wc cut basename dirname \
+      find grep mv rm mkdir cat nohup sha256sum; do
+    p=$(command -v "$b" 2>/dev/null) && ln -sf "$p" "$d/$b"
+  done
+  ! PATH="$d" "'"$ROOT"'/scripts/doctor.sh" >/dev/null 2>&1'
 # Portability: a detached worker must not depend on setsid alone (macOS has no setsid).
 check "worker spawn has non-setsid fallback" bash -c '
   grep -q "setsid" "'"$COMPANION"'" || exit 0            # no setsid at all is fine
