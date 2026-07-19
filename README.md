@@ -11,6 +11,23 @@ This Hermes-native port mirrors the user-facing semantics of [`openai/codex-plug
 - Workspace-scoped status, result, and cancellation commands
 - Hermes-to-Codex transfer and an optional stop-time review gate
 
+## How this differs from `/codex-runtime`
+
+Hermes already ships Codex integration: `/codex-runtime` toggles `model.openai_runtime` to `codex_app_server`, handing every turn to a Codex subprocess and exposing Hermes' own tools back to it over an internal `hermes-tools` MCP bridge. That is **substitution** — Codex becomes Hermes' inference engine, session-wide.
+
+This plugin is **delegation**. Hermes keeps its own runtime and dispatches discrete jobs to a separate Codex process with its own thread, sandbox, and lifecycle.
+
+| | `/codex-runtime` | this plugin |
+|---|---|---|
+| Role of Codex | replaces Hermes' inference engine | receives bounded jobs from Hermes |
+| Scope | global mode, all turns | per invocation |
+| Review context | same agent, same context, wrote the code | fresh thread, read-only sandbox |
+| Execution | synchronous, one turn | background jobs, status/result/cancel, notifications |
+
+The load-bearing difference is the third row. A review is worth more when the reviewer is not the author, and only a separate Codex thread gives you that — it holds even if Codex is already your runtime.
+
+They compose: run Hermes on its normal runtime and delegate reviews and bounded coding tasks here. The one genuinely redundant case is using `/codex-rescue` to implement something while `/codex-runtime` is already active — Codex delegating to Codex, where you gain the job lifecycle but not a second perspective.
+
 ## Requirements
 
 - Bash 4 or later, `git`, `jq` 1.6 or later, and a standard POSIX userland
