@@ -15,9 +15,9 @@ This Hermes-native port mirrors the user-facing semantics of [`openai/codex-plug
 
 Hermes already ships two Codex surfaces. Know them before installing this — depending on what you want, one of them may be enough.
 
-**`/codex-runtime`** toggles `model.openai_runtime` to `codex_app_server`, handing every turn to a Codex subprocess and exposing Hermes' tools back to it over an internal `hermes-tools` MCP bridge. That is *substitution*: Codex becomes Hermes' inference engine, persisted in config, for all turns. It is not a delegation mechanism and does not overlap with this plugin.
+**`/codex-runtime`** toggles `model.openai_runtime` to `codex_app_server`. This is stronger than a model swap: Hermes' whole agent loop is bypassed and the turn is handed to a Codex subprocess, with Hermes' tools exposed back over an internal `hermes-tools` MCP bridge. The setting is written to `config.yaml`, so it is global and persistent — there is no per-conversation or single-turn scope. It is *substitution*, not delegation, and does not overlap with this plugin.
 
-**The bundled `codex` skill** (`skills/autonomous-ai-agents/codex`) is the real neighbour. It teaches Hermes to shell out to the Codex CLI through the `terminal` tool, and it already covers a lot: `codex exec` one-shots, `background=true` with `process` poll/log/kill, `codex review --base`, git-worktree parallelism, and PTY and sandbox workarounds. If you want ad-hoc "go run Codex on this," **the skill already does that** and costs no install.
+**The bundled `codex` skill** (`skills/autonomous-ai-agents/codex`) is the real neighbour. It teaches Hermes to shell out to the Codex CLI through the `terminal` tool, and it already covers a lot: `codex exec` one-shots, `background=true` with `process` poll/log/kill, `codex review --base`, git-worktree parallelism, and PTY and sandbox workarounds. The companion `kanban-codex-lane` skill adds a bounded-delegation convention with mandatory worktree isolation. If you want ad-hoc "go run Codex on this," **the skills already do that** and cost no install.
 
 This plugin is narrower and more opinionated. What it adds over the skill:
 
@@ -33,6 +33,8 @@ This plugin is narrower and more opinionated. What it adds over the skill:
 What the skill does better: it is already installed, and it covers worktree parallelism, interactive `process submit` replies, and sandbox escape hatches that this plugin does not.
 
 So: use the skill for ad-hoc Codex runs. Use this when you want review as a repeatable, structured operation — one whose output has a shape you can act on, in a thread that did not write the code under review.
+
+**Compatibility caveat.** If you enable `/codex-runtime codex_app_server`, Hermes returns from its turn before reaching the verification stage, so the **stop review gate never fires** on that runtime. The slash commands still work — they are handled before agent dispatch — but the automatic gate is silently inert. Keep Hermes on its default runtime if you want the gate.
 
 ## Requirements
 
