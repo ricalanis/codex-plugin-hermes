@@ -1,0 +1,44 @@
+required:
+  - name: bash
+    minimum_version: "4.0"
+    purpose: Run the companion and doctor scripts.
+    check: "bash --version"
+    install_hint: "macOS: brew install bash; Debian/Ubuntu: apt install bash"
+  - name: codex
+    minimum_version: "0.144"
+    purpose: Execute Codex reviews and delegated tasks.
+    check: "codex --version"
+    install_hint: "npm install -g @openai/codex"
+  - name: jq
+    minimum_version: "1.6"
+    purpose: Read and atomically update job state and JSONL output.
+    check: "jq --version"
+    install_hint: "macOS: brew install jq; Debian/Ubuntu: apt install jq"
+  - name: git
+    purpose: Resolve workspaces and collect review scope.
+    check: "git --version"
+    install_hint: "macOS: xcode-select --install; Debian/Ubuntu: apt install git"
+  - name: posix-userland
+    purpose: Provide the standard text and file utilities the companion uses; hashing falls back between sha256sum and shasum.
+    check: "command -v awk && command -v find && command -v sed"
+    install_hint: "macOS: included; Debian/Ubuntu: apt install coreutils findutils grep sed mawk"
+
+optional:
+  - name: hermes
+    purpose: Send background-job completion notifications only.
+    check: "hermes --version"
+    install_hint: "Install Hermes Agent if background-job notifications are wanted."
+  - name: setsid
+    purpose: Use a dedicated process group for Linux background workers.
+    check: "command -v setsid"
+    install_hint: "Linux: install util-linux; macOS uses the built-in nohup fallback."
+
+development:
+  - name: shellcheck
+    purpose: Run the shell-script quality gate.
+    check: "shellcheck --version"
+    install_hint: "macOS: brew install shellcheck; Debian/Ubuntu: apt install shellcheck"
+  - name: python3
+    purpose: Run acceptance helpers and compile-check __init__.py.
+    check: "python3 --version"
+    install_hint: "macOS: brew install python; Debian/Ubuntu: apt install python3"

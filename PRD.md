@@ -101,11 +101,11 @@ The `reference/codex-plugin-cc` directory is a full clone of the original OpenAI
 - [x] Project scaffold created
 - [x] Reference cloned
 - [x] PRD written (this file)
-- [ ] plugin.yaml manifest
-- [ ] 8 slash commands
-- [ ] codex-companion.sh core script
-- [ ] Prompts (adversarial-review, stop-review-gate)
-- [ ] Hooks (session lifecycle, stop review gate)
-- [ ] Pull-reflect cron job
-- [ ] Tests
-- [ ] First working command (/codex:setup)
+- [x] plugin.yaml manifest
+- [x] 8 slash commands (`/codex-review` … `/codex-setup`, registered via `register(ctx)`)
+- [x] codex-companion.sh core script (10 subcommands, verified end-to-end against codex-cli 0.144.6)
+- [x] Prompts (adversarial-review, stop-review-gate) — ported with placeholder/block parity
+- [x] Hooks (`on_session_end`, `pre_verify` stop review gate — fail-open, off by default)
+- [x] Pull-reflect loop (`.claude/skills/pull-reflect` + deterministic `check-drift.sh`; cron recipe documented)
+- [x] Tests (`tests/acceptance.sh` — 40 checks, green; shellcheck + py_compile clean)
+- [x] First working command (`/codex-setup`) — plus task/review/status/result/cancel/resume verified live

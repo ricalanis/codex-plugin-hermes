@@ -1,12 +1,9 @@
-# Reference projects — cloned locally, not committed
-# They're pointers, not part of our codebase
-ref/codex-plugin-cc/.git
-ref/hermes-agent/
-
-# But keep the README and the codex-plugin-cc source (small, 972K)
-!ref/
+# Reference mirrors — cloned on demand, never committed.
+# They are upstream code (openai/codex-plugin-cc, NousResearch/hermes-agent);
+# we don't redistribute them. Bootstrap with:
+#   .claude/skills/pull-reflect/scripts/check-drift.sh --bootstrap
+ref/*
 !ref/README.md
-!ref/codex-plugin-cc/
 
 # Python
 __pycache__/
