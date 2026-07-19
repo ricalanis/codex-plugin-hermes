@@ -1,0 +1,21 @@
+# Reference projects — cloned locally, not committed
+# They're pointers, not part of our codebase
+ref/codex-plugin-cc/.git
+ref/hermes-agent/
+
+# But keep the README and the codex-plugin-cc source (small, 972K)
+!ref/
+!ref/README.md
+!ref/codex-plugin-cc/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Node
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
