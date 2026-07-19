@@ -11,22 +11,28 @@ This Hermes-native port mirrors the user-facing semantics of [`openai/codex-plug
 - Workspace-scoped status, result, and cancellation commands
 - Hermes-to-Codex transfer and an optional stop-time review gate
 
-## How this differs from `/codex-runtime`
+## How this relates to Hermes' existing Codex support
 
-Hermes already ships Codex integration: `/codex-runtime` toggles `model.openai_runtime` to `codex_app_server`, handing every turn to a Codex subprocess and exposing Hermes' own tools back to it over an internal `hermes-tools` MCP bridge. That is **substitution** — Codex becomes Hermes' inference engine, session-wide.
+Hermes already ships two Codex surfaces. Know them before installing this — depending on what you want, one of them may be enough.
 
-This plugin is **delegation**. Hermes keeps its own runtime and dispatches discrete jobs to a separate Codex process with its own thread, sandbox, and lifecycle.
+**`/codex-runtime`** toggles `model.openai_runtime` to `codex_app_server`, handing every turn to a Codex subprocess and exposing Hermes' tools back to it over an internal `hermes-tools` MCP bridge. That is *substitution*: Codex becomes Hermes' inference engine, persisted in config, for all turns. It is not a delegation mechanism and does not overlap with this plugin.
 
-| | `/codex-runtime` | this plugin |
+**The bundled `codex` skill** (`skills/autonomous-ai-agents/codex`) is the real neighbour. It teaches Hermes to shell out to the Codex CLI through the `terminal` tool, and it already covers a lot: `codex exec` one-shots, `background=true` with `process` poll/log/kill, `codex review --base`, git-worktree parallelism, and PTY and sandbox workarounds. If you want ad-hoc "go run Codex on this," **the skill already does that** and costs no install.
+
+This plugin is narrower and more opinionated. What it adds over the skill:
+
+| | bundled `codex` skill | this plugin |
 |---|---|---|
-| Role of Codex | replaces Hermes' inference engine | receives bounded jobs from Hermes |
-| Scope | global mode, all turns | per invocation |
-| Review context | same agent, same context, wrote the code | fresh thread, read-only sandbox |
-| Execution | synchronous, one turn | background jobs, status/result/cancel, notifications |
+| Invocation | the model composes a `terminal` command each time | fixed slash commands over a tested script |
+| Job records | ephemeral terminal sessions | per-workspace job store; `result` retrievable after the fact |
+| Continuity | none | `--resume-last` continues a Codex thread with its context |
+| Review output | free-form prose | schema-constrained verdict, findings, severity, file:line |
+| Stop gate | none | optional `pre_verify` gate that can send Hermes back to work |
+| Completion | you poll | `hermes send` notification |
 
-The load-bearing difference is the third row. A review is worth more when the reviewer is not the author, and only a separate Codex thread gives you that — it holds even if Codex is already your runtime.
+What the skill does better: it is already installed, and it covers worktree parallelism, interactive `process submit` replies, and sandbox escape hatches that this plugin does not.
 
-They compose: run Hermes on its normal runtime and delegate reviews and bounded coding tasks here. The one genuinely redundant case is using `/codex-rescue` to implement something while `/codex-runtime` is already active — Codex delegating to Codex, where you gain the job lifecycle but not a second perspective.
+So: use the skill for ad-hoc Codex runs. Use this when you want review as a repeatable, structured operation — one whose output has a shape you can act on, in a thread that did not write the code under review.
 
 ## Requirements
 
