@@ -31,8 +31,14 @@ It compares the live upstream HEADs against upstream.lock, the commits this repo
 reconciled against.
   - exit 0, "no drift"           -> upstream has not moved. Go to step 5.
   - exit 0, "UPSTREAM DRIFT"     -> go to step 3.
-  - exit 2, "CANNOT CHECK"       -> nothing was verified (usually no network). Report that
-                                    plainly, never as "no drift", and go to step 5.
+  - exit 2, "CANNOT CHECK"       -> nothing was verified. Report it plainly, never as
+                                    "no drift", and go to step 5.
+If the cause is no network (git ls-remote fails, apt/GitHub return 403), say so explicitly
+and flag it as a CONFIGURATION PROBLEM NEEDING A HUMAN, not a transient error: the
+container needs internet access enabled in the Codex Web environment settings, with
+github.com allowed. Until that is fixed this task can only run the gates — half of its
+purpose is dead, and a report that merely notes "could not check" every week will be
+mistaken for routine. Put it at the TOP of your report, not under "deliberately not done".
 
 STEP 3 — Read the changed source.
     .claude/skills/pull-reflect/scripts/check-drift.sh --bootstrap

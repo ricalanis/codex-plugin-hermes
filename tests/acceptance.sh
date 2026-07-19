@@ -10,6 +10,17 @@ PASS=0; FAIL=0
 ok()   { PASS=$((PASS+1)); printf 'ok   %s\n' "$1"; }
 fail() { FAIL=$((FAIL+1)); printf 'FAIL %s\n' "$1"; }
 check() { local d="$1"; shift; if "$@" >/dev/null 2>&1; then ok "$d"; else fail "$d"; fi; }
+# Run a check only when `tool` exists; otherwise record the gap loudly.
+# Never skip silently — an unreported skip reads as coverage that does not exist.
+check_needs() {
+  local tool="$1" desc="$2"; shift 2
+  if command -v "$tool" >/dev/null 2>&1; then
+    check "$desc" "$@"
+  else
+    SKIPPED="${SKIPPED:-}${desc} [needs ${tool}] "
+    printf 'SKIP %s — %s not installed\n' "$desc" "$tool"
+  fi
+}
 
 # Isolated state for every companion invocation
 export CODEX_COMPANION_STATE_ROOT="$(mktemp -d)"
@@ -33,12 +44,9 @@ check "ref/: no in-place modifications to mirror contents" bash -c '
 
 # ---------- 2. Static quality ----------
 check "bash -n companion" bash -n "$COMPANION"
-if command -v shellcheck >/dev/null 2>&1; then
-  check "shellcheck companion" shellcheck -S warning "$COMPANION"
-else
-  SKIPPED="${SKIPPED:-}shellcheck (not installed) "
-  printf 'SKIP shellcheck companion — shellcheck not installed\n'
-fi
+check_needs shellcheck "shellcheck companion" shellcheck -S warning "$COMPANION"
+check_needs shellcheck "shellcheck check-drift.sh" \
+  shellcheck -S warning "$ROOT/.claude/skills/pull-reflect/scripts/check-drift.sh"
 check "py_compile __init__.py" python3 -m py_compile "$ROOT/__init__.py"
 check "__init__.py defines register(ctx)" grep -qE '^def register\(ctx' "$ROOT/__init__.py"
 check "__init__.py stdlib-only imports" bash -c '! grep -E "^(import|from) (yaml|requests|httpx|pydantic)" "'"$ROOT"'/__init__.py"'
@@ -112,9 +120,7 @@ check "exists: dependencies.yaml" test -f "$ROOT/dependencies.yaml"
 check "exists: scripts/doctor.sh" test -f "$ROOT/scripts/doctor.sh"
 check "doctor.sh is executable" test -x "$ROOT/scripts/doctor.sh"
 check "bash -n doctor.sh" bash -n "$ROOT/scripts/doctor.sh"
-if command -v shellcheck >/dev/null 2>&1; then
-  check "shellcheck doctor.sh" shellcheck -S warning "$ROOT/scripts/doctor.sh"
-fi
+check_needs shellcheck "shellcheck doctor.sh" shellcheck -S warning "$ROOT/scripts/doctor.sh"
 check "dependencies.yaml declares required runtime deps" python3 - "$ROOT/dependencies.yaml" <<'EOF'
 import sys, re
 raw = open(sys.argv[1]).read()
@@ -134,12 +140,7 @@ for x in deps:
 "'
 # doctor exits non-zero when a required dep is genuinely absent, so this check is only
 # meaningful where the codex CLI exists (it won't in a cloud container). Skip loudly.
-if command -v codex >/dev/null 2>&1; then
-  check "doctor exits 0 when required deps present" "$ROOT/scripts/doctor.sh"
-else
-  SKIPPED="${SKIPPED:-}doctor-exit-0 (codex CLI absent) "
-  printf 'SKIP doctor exits 0 — codex CLI not installed in this environment\n'
-fi
+check_needs codex "doctor exits 0 when required deps present" "$ROOT/scripts/doctor.sh"
 # doctor must still FAIL when a required dep is missing, everywhere.
 check "doctor exits non-zero when a required dep is missing" bash -c '
   d=$(mktemp -d); for b in bash git awk sed date mktemp head tail tr wc cut basename dirname \
