@@ -23,7 +23,8 @@ check_needs() {
 }
 
 # Isolated state for every companion invocation
-export CODEX_COMPANION_STATE_ROOT="$(mktemp -d)"
+CODEX_COMPANION_STATE_ROOT="$(mktemp -d)"
+export CODEX_COMPANION_STATE_ROOT
 trap 'rm -rf "$CODEX_COMPANION_STATE_ROOT"' EXIT
 
 # ---------- 1. Structure ----------
