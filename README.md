@@ -48,17 +48,25 @@ Hermes has no mechanism for declaring binary prerequisites in a plugin manifest,
 
 Paste this into a Hermes session and it will install the plugin itself:
 
-> Install the Codex plugin from `ricalanis/codex-plugin-hermes`.
->
-> 1. Check `codex --version` first — it must be 0.144 or later. If it's missing, tell me and stop; install it with `npm install -g @openai/codex`.
-> 2. Run `hermes plugins install ricalanis/codex-plugin-hermes --enable`. The `--enable` flag is required: without it a non-interactive install lands **disabled** and silently does nothing.
-> 3. Verify with `hermes plugins list --json` — look for the plugin named **`codex`** (not `codex-plugin-hermes`; the name comes from the manifest, not the repo) and confirm it is enabled.
-> 4. Run `hermes gateway restart`.
-> 5. Then run `/codex-setup` and show me the output. If it reports unauthenticated, tell me to run `codex login`.
->
-> If any step fails, stop and report which one — don't continue past a failure.
+```text
+Install the Codex plugin from ricalanis/codex-plugin-hermes.
 
-Everything after step 1 is inside the plugin's own README, so an agent that fetches this page can follow it unattended. The manual equivalent is below.
+1. Check `codex --version` first — it must be 0.144 or later. If it is missing,
+   tell me and stop; it installs with `npm install -g @openai/codex`.
+2. Run: hermes plugins install ricalanis/codex-plugin-hermes --enable
+   The --enable flag is required. Without it a non-interactive install lands
+   DISABLED and silently does nothing.
+3. Verify with `hermes plugins list --json`. Look for the plugin named "codex"
+   — not "codex-plugin-hermes"; the name comes from the manifest, not the repo
+   — and confirm it is enabled.
+4. Run: hermes gateway restart
+5. Run /codex-setup and show me the output. If it reports unauthenticated, tell
+   me to run `codex login`.
+
+If any step fails, stop and report which one. Do not continue past a failure.
+```
+
+An agent that fetches this page can follow it unattended. The manual equivalent is below.
 
 ## Install
 
