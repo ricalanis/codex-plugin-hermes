@@ -154,7 +154,21 @@ check "worker spawn has non-setsid fallback" bash -c '
 '
 check "README documents requirements incl. jq and git" bash -c 'grep -qi "jq" "'"$ROOT"'/README.md" && grep -qiE "^- .*[Gg]it|[Gg]it " "'"$ROOT"'/README.md"'
 
-# ---------- 7. Optional live smoke ----------
+# ---------- 7. Drift loop must work without the mirrors present ----------
+check "upstream.lock exists and lists both mirrors" bash -c '
+  L="'"$ROOT"'/upstream.lock"; [ -f "$L" ] &&
+  grep -qE "^codex-plugin-cc [0-9a-f]{40}$" "$L" &&
+  grep -qE "^hermes-agent [0-9a-f]{40}$" "$L"'
+check "upstream.lock is tracked by git" bash -c '
+  cd "'"$ROOT"'" && git ls-files --error-unmatch upstream.lock'
+# The detector must not depend on ref/ being cloned — a fresh container has none.
+check "drift detector reports CANNOT CHECK without a lockfile" bash -c '
+  L="'"$ROOT"'/upstream.lock"; T=$(mktemp); cp "$L" "$T"; rm -f "$L"
+  out=$("'"$ROOT"'/.claude/skills/pull-reflect/scripts/check-drift.sh" 2>&1); rc=$?
+  cp "$T" "$L"; rm -f "$T"
+  [ "$rc" = 2 ] && grep -q "CANNOT CHECK" <<<"$out"'
+
+# ---------- 8. Optional live smoke ----------
 if [ "${RUN_LIVE:-0}" = "1" ]; then
   check "live: setup reports codex available" bash -c '"'"$COMPANION"'" setup --json | python3 -c "import json,sys; assert json.load(sys.stdin)[\"codex_available\"] is True"'
 fi

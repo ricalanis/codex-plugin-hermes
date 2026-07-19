@@ -9,13 +9,19 @@ Keeps codex-plugin-hermes aligned with its two upstreams. Run when asked to "syn
 
 ## The loop
 
-1. **Pull** — always via the detector, which handles missing mirrors honestly:
+1. **Detect** — cheap, clones nothing:
    ```bash
-   .claude/skills/pull-reflect/scripts/check-drift.sh            # or --bootstrap on first run
+   .claude/skills/pull-reflect/scripts/check-drift.sh
    ```
-   The mirrors are **not committed** (they're upstream code); `--bootstrap` clones them. Exit `0` means checked — output is either `no drift` (stop here) or a drift summary. Exit `2` means **CANNOT CHECK**: a mirror is missing or isn't a git clone, so nothing was verified. Never treat exit 2 as all-clear — bootstrap and re-run.
+   It compares live upstream HEADs against `upstream.lock` (committed), which records the commits this repo was last reconciled against. This works with an empty `ref/`, so it runs anywhere.
 
-   Mirrors are read-only: never edit their contents, `git pull` only.
+   Exit `0` → checked: either `no drift` (stop here) or a drift summary. Exit `2` → **CANNOT CHECK**: no network, or a missing/incomplete lockfile — nothing was verified. Never treat exit 2 as all-clear.
+
+   Only when there IS drift, clone the mirrors to read the changed source:
+   ```bash
+   .claude/skills/pull-reflect/scripts/check-drift.sh --bootstrap
+   ```
+   Mirrors are read-only and never committed: never edit their contents.
 
 2. **Diff**: for `ref/codex-plugin-cc`, list changed files between old and new HEAD (`git -C ref/codex-plugin-cc diff --stat <old>..<new>`). Map each to our port surface:
    | Upstream path | Our file |
@@ -35,7 +41,11 @@ Keeps codex-plugin-hermes aligned with its two upstreams. Run when asked to "syn
 
 4. **Verify**: `bash tests/acceptance.sh` must print `0 failed`. Semantics changes also need the relevant contract in `SPEC.md` updated (manager edit, not Codex).
 
-5. **Record**: append to `docs/drift-log.md`: date, upstream commit range, per-file decision (Port/Skip/Adapt) and outcome. Update `docs/changelog.md`.
+5. **Record and release the lock**: append to `docs/drift-log.md` (date, upstream commit range, per-file Port/Skip/Adapt decision and outcome), update `docs/changelog.md`, then:
+   ```bash
+   .claude/skills/pull-reflect/scripts/check-drift.sh --update-lock
+   ```
+   Without this the same drift is reported every run forever. Update the lock **only** for drift you actually triaged — doing it otherwise silently discards an upstream change.
 
 ## Scheduling it (optional)
 

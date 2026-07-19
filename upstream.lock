@@ -1,0 +1,5 @@
+# Upstream commits this repo has been reconciled against.
+# check-drift.sh compares these to the live remote HEADs.
+# Update ONLY after triaging the drift (see .claude/skills/pull-reflect/SKILL.md).
+codex-plugin-cc db52e28f4d9ded852ab3942cea316258ae4ef346
+hermes-agent dd418284db1804d33cd3d6d51c17bbfb1ad8f685
