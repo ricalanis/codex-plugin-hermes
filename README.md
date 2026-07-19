@@ -78,6 +78,14 @@ ln -s /path/to/codex-plugin-hermes ~/.hermes/plugins/codex
 hermes plugins enable codex
 ```
 
+**If you later switch from the symlink to a real install, delete the symlink first:**
+
+```bash
+rm ~/.hermes/plugins/codex
+```
+
+Otherwise `hermes plugins install` fails with *"Invalid plugin name 'codex': resolves outside the plugins directory."* The installer resolves `~/.hermes/plugins/codex` and follows the symlink to your checkout, which lands outside the plugins directory and trips its path-traversal guard. The name `codex` is fine — the stale symlink is the problem.
+
 Then confirm the runtime from inside Hermes:
 
 ```text
