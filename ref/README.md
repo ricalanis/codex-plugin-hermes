@@ -11,10 +11,14 @@ Mirror of https://github.com/openai/codex-plugin-cc
 - Source of truth for command semantics
 
 ### hermes-agent
-Mirror of https://github.com/NousResearch/hermes-agent
-- Hermes Agent source (slimmed — plugin system, slash commands, hooks, gateway only)
-- Reference for plugin architecture: `plugins/*.yaml` manifests, `gateway/slash_commands.py`, hooks system
-- How Hermes plugins are structured, how slash commands are registered, how hooks fire
+Mirror of https://github.com/NousResearch/hermes-agent (~236 MB, full source)
+- The platform we port **to**. This is the source of truth for every Hermes API question —
+  read it rather than guessing or trusting a prose summary.
+- `hermes_cli/plugins.py` — manifest fields, the `register(ctx)` surface, `VALID_HOOKS`,
+  and each hook's exact kwargs and return contract (including `pre_verify`, our stop gate)
+- `hermes_cli/plugins_cmd.py` — install/enable mechanics · `hermes_cli/send_cmd.py` — notifications
+- `tools/` — `delegate_task`, `terminal`, and the rest of the tool surface
+- `AGENTS.md` — Hermes' own plugin authoring rules
 
 ## Bootstrap
 

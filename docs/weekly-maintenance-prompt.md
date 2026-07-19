@@ -16,6 +16,29 @@ Hermes instance. That is expected. The acceptance contract is offline by design 
 skip exactly one check ("doctor exits 0", needs the codex CLI) while printing a SKIPPED
 line. A SKIPPED line here is normal; a FAIL is not.
 
+STEP 0 — Get the sources. Run:
+    .claude/skills/pull-reflect/scripts/check-drift.sh --bootstrap
+This clones BOTH upstream repos into ref/ (gitignored, never committed):
+    ref/codex-plugin-cc  — openai/codex-plugin-cc, the semantics we port FROM
+    ref/hermes-agent     — NousResearch/hermes-agent, the platform we port TO (~236 MB)
+
+You need both. Porting a change means answering two questions — "what did upstream do?"
+and "what is the Hermes equivalent?" — and the second is answered by READING
+ref/hermes-agent SOURCE. Do not guess at Hermes APIs and do not trust any prose summary
+over the source:
+    hermes_cli/plugins.py   — plugin.yaml manifest fields, the register(ctx) surface,
+                              VALID_HOOKS, and each hook's exact kwargs and return contract
+    hermes_cli/plugins_cmd.py — install/enable mechanics
+    hermes_cli/send_cmd.py  — `hermes send` notification CLI
+    tools/                  — delegate_task, terminal, and the rest of the tool surface
+    AGENTS.md               — Hermes' own plugin authoring rules and constraints
+The files under docs/research/ are navigational maps written earlier; they are useful for
+finding your way around, but where they disagree with the source, THE SOURCE WINS — fix
+the doc and note it in docs/known_issues.md.
+
+If the bootstrap reports CANNOT CHECK (exit 2), you have no network. Report that plainly,
+skip steps 2 and 3, and still run step 1.
+
 STEP 1 — Health gates. Run:
     bash tests/acceptance.sh
     shellcheck -S warning scripts/codex-companion.sh scripts/doctor.sh .claude/skills/pull-reflect/scripts/check-drift.sh
@@ -23,14 +46,16 @@ STEP 1 — Health gates. Run:
 Install shellcheck if absent (apt-get install -y shellcheck). Expect "0 failed".
 If anything FAILS, that is this week's job: fix it, and skip step 2. Report what broke.
 
-STEP 2 — Upstream drift. Run:
-    .claude/skills/pull-reflect/scripts/check-drift.sh --bootstrap
-This clones the upstream mirrors into ref/ (gitignored, never committed).
+STEP 2 — Upstream drift. Re-run the detector (the mirrors are cloned now):
+    .claude/skills/pull-reflect/scripts/check-drift.sh
   - Exit 0 + "no drift"  -> nothing changed upstream. Go to step 4.
   - Exit 0 + drift summary -> go to step 3.
-  - Exit 2 "CANNOT CHECK" -> the clone failed, usually no network access in this container.
-    Do NOT treat this as "no drift". Report that drift could not be checked and why, then
-    go to step 4 and still report the step 1 gate results.
+  - Exit 2 "CANNOT CHECK" -> nothing was verified. Never report this as "no drift".
+Drift in ref/hermes-agent matters as much as drift in ref/codex-plugin-cc: if a hook's
+kwargs, the manifest fields, or the register(ctx) surface changed, this plugin may be
+silently broken against current Hermes even though upstream codex-plugin-cc never moved.
+Check that our pre_verify and on_session_end hooks still match their contracts in
+hermes_cli/plugins.py, and that plugin.yaml still uses fields the loader reads.
 
 STEP 3 — Triage each changed upstream file. Map it to our port using the table in
 .claude/skills/pull-reflect/SKILL.md, then classify:
